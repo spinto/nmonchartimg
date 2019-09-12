@@ -84,7 +84,8 @@ esac
 
 #If input format is NMON, convert to HTML first with NMONCHART, otherwise just use the HTML
 if [[ "$INPUT_FILE_FORMAT" == "nmon" ]]; then
- NMONCHART=`which nmonchart 2>/dev/null`
+ NMONCHART=`command -v nmonchart 2>/dev/null`
+ [[ -x "$NMONCHART" ]] || NMONCHART=
  [[ -z "$NMONCHART" && -x "./nmonchart" ]] && NMONCHART="./nmonchart"
  [[ -z "$NMONCHART" ]] && error 14 "NmonChart is required by this script. Please install it or download it from http://nmon.sourceforge.net and uncompress it in the script folder"
  [[ -z "`which ksh 2>/dev/null`" ]] && error 15 "ksh not found. This is needed to run nmonchart. Please install it." 
