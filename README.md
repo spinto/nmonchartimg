@@ -3,8 +3,14 @@ Small bash script to render nmon charts generated via nmonchart as image
 # Installation
 Make sure you have the following software installed:
  - nmonchart (you can download the software from here: http://nmon.sourceforge.net/pmwiki.php?n=Site.Nmonchart, just uncompress it and place it into this script directory)
- - ksh and bash (if you do not have them, install them with your package manager (e.g. yum install -y bash ksh))
- - wkhtmltopdf (you can download and install it from here: https://wkhtmltopdf.org/ )
+ - ksh and bash (if you do not have them, install them with your package manager (e.g. ```yum install -y bash ksh```))
+ - nodejs, puppeteer and chrome (or any other headless browser you want to use in the backend). You can install these via:
+ 
+ ```
+ yum install -y nodejs
+ yum install -y https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+ npm install -g puppeteer-core
+ ```
 
 Then just copy the nmonchartimg.sh script into your system and give it execution rights:
 
