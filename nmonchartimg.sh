@@ -72,7 +72,13 @@ done
 #Check arguments
 [[ -z "$CHART_ID" ]] && usage
 [[ -z "$INPUT_FILE" ]] && usage
+INPUT_FILE="`readlink -f $INPUT_FILE`"
+[[ -e "$INPUT_FILE" ]] || error 3 "Input file does not exists"
 [[ -z "$OUTPUT_FILE" ]] && error 2 "Please specify an output JPEG or PNG file"
+touch $OUTPUT_FILE &>/dev/null
+[[ $? -ne 0 ]]  && error 4 "Failed to write output file. Check output directory"
+OUTPUT_FILE="`readlink -f $OUTPUT_FILE`"
+rm -f $OUTPUT_FILE
 
 #Detect input file format
 case "`head -c 4 < $INPUT_FILE`" in
