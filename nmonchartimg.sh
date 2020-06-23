@@ -1,6 +1,6 @@
 #!/bin/bash
 #Create NMON files chart images
-#Requires ksh, nodejs, puppeteer, nmonchart
+#Requires ksh, nodejs, puppeteer-core, nmonchart
 
 function usage(){
   echo "Usage:
@@ -114,16 +114,19 @@ echo "INFO: Rendering HTML..."
 NODE=`command -v node 2>/dev/null`
 [[ -x "$NODE" ]] || NODE=
 [[ -z "$NODE" ]] && error 14 "Cannot find node installed. Please install it!"
-[[ -d "/usr/lib/node_modules/puppeteer" ]] || error 15 "Cannot find puppeteer installed. Please install it as global node library!"
+[[ -d "/usr/lib/node_modules/puppeteer-core" ]] || error 15 "Cannot find puppeteer-core installed. Please install it as global node library!"
+CHROME_EXEC=`command -v google-chrome-stable 2>/dev/null`
+[[ -x "$CHROME_EXEC" ]] || CHROME_EXEC=
+[[ -z "$CHROME_EXEC" ]] && error 16 "Cannot find node google-chrome-stable installed. Please install it!"
 #Fix HTML layout
 sed -i -e 's|chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"}|"width": '"$GRAPH_WIDTH"',"height": '"$GRAPH_HEIGHT"',chartArea: {left: "'"$AREA_LEFT"'%", width: "'"$AREA_WIDTH"'%", top: "'"$AREA_TOP"'%", height: "'"$AREA_HEIGHT"'%"}|g' -e 's|nmon data file: <b>[^<]*</b>||g' -e 's|<br>||g' -e 's|<body |<body style="margin: 0;" |g' -e 's|<button |<button style="display:none;" |g' -e "s|hAxis: {|hAxis: { $DATE_FORMAT_AXIS|g" $OUTPUT_FILE.htm
 
 #Render HTML
 $NODE <<EOF
-const puppeteer = require('/usr/lib/node_modules/puppeteer');
+const puppeteer = require('/usr/lib/node_modules/puppeteer-core');
 
 (async () => {
-  const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+  const browser = await puppeteer.launch({executablePath: '$CHROME_EXEC', args: ['--no-sandbox', '--disable-setuid-sandbox']});
   const page = await browser.newPage();
   await page.setViewport({
     width: $GRAPH_WIDTH,
