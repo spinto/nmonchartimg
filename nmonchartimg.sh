@@ -1,6 +1,6 @@
 #!/bin/bash
 #Create NMON files chart images
-#Requires ksh, wkhtmltox, nmonchart
+#Requires ksh, nodejs, puppeteer, nmonchart
 
 function usage(){
   echo "Usage:
@@ -103,19 +103,36 @@ if $GET_CHART_IDS; then
   exit 1
 fi
 
-#Render HTML with wkhtmltoimage
+#Render HTML with puppeteer
 echo "INFO: Rendering HTML..."
-HTMLTOIMAGE=`command -v wkhtmltoimage 2>/dev/null`
-[[ -x "$HTMLTOIMAGE" ]] || HTMLTOIMAGE=
-[[ -z "$HTMLTOIMAGE" && -x "./wkhtmltoimage" ]] && HTMLTOIMAGE="./wkhtmltoimage"
-[[ -z "$HTMLTOIMAGE" ]] && error 14 "Cannot find wkhtmltopdf software. Please install it or download it from https://wkhtmltopdf.org/"
+NODE=`command -v node 2>/dev/null`
+[[ -x "$NODE" ]] || NODE=
+[[ -z "$NODE" ]] && error 14 "Cannot find node installed. Please install it!"
+[[ -d "/usr/lib/node_modules/puppeteer" ]] || error 15 "Cannot find puppeteer installed. Please install it as global node library!"
 #Fix HTML layout
 sed -i -e 's|chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"}|"width": '"$GRAPH_WIDTH"',"height": '"$GRAPH_HEIGHT"',chartArea: {left: "'"$AREA_LEFT"'%", width: "'"$AREA_WIDTH"'%", top: "'"$AREA_TOP"'%", height: "'"$AREA_HEIGHT"'%"}|g' -e 's|nmon data file: <b>[^<]*</b>||g' -e 's|<br>||g' -e 's|<body |<body style="margin: 0;" |g' -e 's|<button |<button style="display:none;" |g' -e "s|hAxis: {|hAxis: { $DATE_FORMAT_AXIS|g" $OUTPUT_FILE.htm
 
 #Render HTML
-$HTMLTOIMAGE --height $GRAPH_HEIGHT --width $GRAPH_WIDTH --disable-smart-width  --debug-javascript --enable-javascript --run-script 'document.getElementById("draw_'"$CHART_ID"'").click();' $OUTPUT_FILE.htm $OUTPUT_FILE
+$NODE <<EOF
+const puppeteer = require('/usr/lib/node_modules/puppeteer');
+
+(async () => {
+  const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+  const page = await browser.newPage();
+  await page.setViewport({
+    width: $GRAPH_WIDTH,
+    height: $GRAPH_HEIGHT,
+    deviceScaleFactor: 1,
+  });
+  await page.goto('file://$OUTPUT_FILE.htm');
+  await page.evaluate(() => {
+    document.getElementById('draw_$CHART_ID').click();
+  });
+  await page.screenshot({path: '$OUTPUT_FILE'});
+  await browser.close();
+})();
+EOF
 rm -f $OUTPUT_FILE.htm
 echo "INFO: Output image created in $OUTPUT_FILE..."
 
 exit 0
-
