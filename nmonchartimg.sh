@@ -114,7 +114,13 @@ echo "INFO: Rendering HTML..."
 NODE=`command -v node 2>/dev/null`
 [[ -x "$NODE" ]] || NODE=
 [[ -z "$NODE" ]] && error 14 "Cannot find node installed. Please install it!"
-[[ -d "/usr/lib/node_modules/puppeteer-core" ]] || error 15 "Cannot find puppeteer-core installed. Please install it as global node library!"
+PUPPETEER_CORE_MODULE="/usr/local/lib/node_modules/puppeteer-core"
+[[ -d "$PUPPETEER_CORE_MODULE" ]] || PUPPETEER_CORE_MODULE="/usr/lib/node_modules/puppeteer-core"
+if [[ ! -d "$PUPPETEER_CORE_MODULE" ]]; then
+  NPM=`command -v npm 2>/dev/null`
+  [[ -x "$NPM" ]] && PUPPETEER_CORE_MODULE="`$NPM config get prefix`/lib/node_modules/puppeteer-core"
+fi
+[[ -d "$PUPPETEER_CORE_MODULE" ]] || error 15 "Cannot find puppeteer-core installed. Please install it as global node library!"
 CHROME_EXEC=`command -v google-chrome-stable 2>/dev/null`
 [[ -x "$CHROME_EXEC" ]] || CHROME_EXEC=
 [[ -z "$CHROME_EXEC" ]] && error 16 "Cannot find node google-chrome-stable installed. Please install it!"
@@ -123,7 +129,7 @@ sed -i -e 's|chartArea: {left: "5%", width: "85%", top: "10%", height: "80%"}|"w
 
 #Render HTML
 $NODE <<EOF
-const puppeteer = require('/usr/lib/node_modules/puppeteer-core');
+const puppeteer = require('$PUPPETEER_CORE_MODULE');
 
 (async () => {
   const browser = await puppeteer.launch({executablePath: '$CHROME_EXEC', args: ['--no-sandbox', '--disable-setuid-sandbox']});
